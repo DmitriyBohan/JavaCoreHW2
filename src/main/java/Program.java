@@ -6,7 +6,7 @@ public class Program {
 
     private static final Scanner scanner = new Scanner(System.in);
     private static final Random random = new Random();
-    private static final int WIN_COUNT = 4;
+    private static final int WIN_COUNT = 3;
     private static final char DOT_HUMAN = 'X';
     private static final char DOT_AI = '0';
     private static final char DOT_EMPTY = '*';
@@ -27,7 +27,7 @@ public class Program {
                 }
                 printField();
 
-                if (aiTurn()) {
+                if (aiTurn3()) {
                     printField();
                     System.out.println("Победа за компьютером!");
                     break;
@@ -45,8 +45,8 @@ public class Program {
      * Инициализация объектов игры
      */
     static void initialize() {
-        fieldSizeX = 4;
-        fieldSizeY = 4;
+        fieldSizeX = 3;
+        fieldSizeY = 3;
         field = new char[fieldSizeX][fieldSizeY];
         for (int x = 0; x < fieldSizeX; x++) {
             for (int y = 0; y < fieldSizeY; y++) {
@@ -87,16 +87,13 @@ public class Program {
         int x;
         int y;
         do {
-            System.out.println("Введите координаты хода X и Y\n(от 1 до"+WIN_COUNT +") через пробел: ");
+            System.out.println("Введите координаты хода X и Y\n(от 1 до " + WIN_COUNT + ") через пробел: ");
             x = scanner.nextInt() - 1;
             y = scanner.nextInt() - 1;
         }
         while (!isCellValid(x, y) || !isCellEmpty(x, y));
         field[x][y] = DOT_HUMAN;
-        if (check3(x, y, DOT_HUMAN, WIN_COUNT)) {
-            return true;
-        }
-        return false;
+        return checkALL(DOT_HUMAN, WIN_COUNT);
     }
 
 
@@ -127,11 +124,65 @@ public class Program {
         }
         while (!isCellEmpty(x, y));
         field[x][y] = DOT_AI;
-        if (check3(x, y, DOT_AI, WIN_COUNT)) {
+
+        if (checkALL(DOT_AI, WIN_COUNT)) {
             return true;
         }
+
         return false;
     }
+
+    static boolean aiTurn3() {
+        int x;
+        int y;
+
+
+        if (checkG(DOT_HUMAN, WIN_COUNT - 1)) {
+            System.out.println();
+            outerLoopСheckG:
+            for (int i = 0; i < fieldSizeX; i++) {
+                for (int j = 0; j < fieldSizeY; j++) {
+                    if (isCellEmpty(j, i)) {
+                        field[j][i] = DOT_AI;
+                        break outerLoopСheckG;
+                    }
+                }
+            }
+        } else if (checkV(DOT_HUMAN, WIN_COUNT - 1)) {
+            outerLoopСheckG:
+            for (int i = 0; i < fieldSizeX; i++) {
+                for (int j = 0; j < fieldSizeY; j++) {
+                    if (isCellEmpty(i, j)) {
+                        field[i][j] = DOT_AI;
+                        break outerLoopСheckG;
+                    }
+                }
+            }
+        } else if (checkD(DOT_HUMAN, WIN_COUNT - 1)) {
+            for (int i = 0; i < fieldSizeX; i++) {
+                if (isCellEmpty(i, i)) {
+                    field[i][i] = DOT_AI;
+                    break;
+                }
+                if (isCellEmpty(fieldSizeX - i - 1, i)) {
+                    field[fieldSizeX - i - 1][i] = DOT_AI;
+                    break;
+                }
+            }
+        } else {
+            do {
+                x = random.nextInt(fieldSizeX);
+                y = random.nextInt(fieldSizeY);
+            }
+            while (!isCellEmpty(x, y));
+            field[x][y] = DOT_AI;
+        }
+        if (checkALL(DOT_AI, WIN_COUNT)) return true;
+
+        return false;
+
+    }
+
 
     /**
      * Проверка на ничью
@@ -174,51 +225,78 @@ public class Program {
     }
 
     static boolean checkWinV2(char dot, int win) {
-        for (int x = 0; x < fieldSizeX; x++) {
 
-            for (int y = 0; y < fieldSizeY; y++) {
-                //if (check1 == true || check2())
-            }
-        }
         return false;
     }
 
-    /*Проверка на выйгрыш по горизонтали и вертикали*/
-    static boolean check1(int x, int y, char dot, int win) {
-        boolean vertically = true;
-        boolean horizontally = true;
+    /*Проверка на выйгрыш по вертикали*/
+    static boolean checkV(char dot, int win) {
+        int countDot = 0;
         for (int i = 0; i < fieldSizeX; i++) {
-            if (field[x][i] != dot) {
-                horizontally = false;
+            if (win - countDot != 0) {
+                for (int j = 0; j < fieldSizeX; j++) {
+                    if (field[i][j] == dot) {
+                        countDot++;
+                    }
+                }
             }
-            if (field[i][y] != dot) {
-                vertically = false;
+            if (win - countDot == 0) {
+                return true;
+
             }
+            countDot = 0;
         }
-        if (horizontally || vertically) return true;
         return false;
     }
 
+    /*Проверка на выйгрыш по горизонтали*/
+    static boolean checkG(char dot, int win) {
+        int countDot = 0;
+        for (int i = 0; i < fieldSizeX; i++) {
+            if (win - countDot != 0) {
+                for (int j = 0; j < fieldSizeX; j++) {
+                    if (field[j][i] == dot) {
+                        countDot++;
+                    }
+                }
+            }
+            if (win - countDot == 0) {
+                return true;
+
+            }
+            countDot = 0;
+        }
+        return false;
+    }
 
 
     /*Проверка на выйгрыш  диагоналям*/
-    static boolean check2(int x, int y, char dot, int win) {
-        boolean firstDiagonal = true;
-        boolean secondDiagonal = true;
+    static boolean checkD(char dot, int win) {
+        int firstDiagonalCount = 0;
+        int secondDiagonalCount = 0;
         for (int i = 0; i < fieldSizeX; i++) {
-            if (field[i][i] != dot) firstDiagonal = false;
-            if (field[win - i - 1][i] != dot) secondDiagonal = false;
+            if (field[i][i] == dot) {
+                firstDiagonalCount++;
+//               System.out.println(firstDiagonalCount);
+            }
+            if (field[fieldSizeX - i - 1][i] == dot) {
+                secondDiagonalCount++;
+//                System.out.println(secondDiagonalCount);
+            }
         }
-        if (firstDiagonal || secondDiagonal) return true;
+        if (firstDiagonalCount == win || secondDiagonalCount == win) return true;
 
         return false;
     }
 
     /*Общая проверка на выйгрыш*/
-    static boolean check3(int x, int y, char dot, int win) {
-        if (check1(x, y, dot, win)) return true;
-        if (check2(x, y, dot, win)) return true;
+    static boolean checkALL(char dot, int win) {
+        if (checkG(dot, win) || checkV(dot, win) || checkD(dot, win)) return true;
+
+
         return false;
+
+
     }
 
     /**
